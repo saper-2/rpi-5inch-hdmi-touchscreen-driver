@@ -186,13 +186,95 @@ pi@raspiv2 ~/tslib $ git clone
 pi@raspiv2 ~/tslib $ git clone https://github.com/saper-2/rpi-5inch-hdmi-touchscreen-driver.git
 pi@raspiv2 ~/tslib $ cd rpi-5inch-hdmi-touchscreen-driver
 pi@raspiv2 ~/tslib/rpi-5inch-hdmi-touchscreen-driver $ chmod +x install-prepare.sh
+pi@raspiv2 ~/tslib/rpi-5inch-hdmi-touchscreen-driver $ ./install-prepare.sh
+```
 
+Type this to get input devices in system before running touch panel user-space driver. Depending what you have connected (keyboards and mice) you can get other input devices, I have:
+```
+pi@raspiv2 ~/tslib/rpi-5inch-hdmi-touchscreen-driver $ ls /dev/input/
+by-id  by-path  event0  event1  mice  mouse0
+```
+
+Now test if python program find touch panel and will work ok:
+```
+pi@raspiv2 ~/tslib/rpi-5inch-hdmi-touchscreen-driver $ sudo ./touch.py
+```
+
+You shoud see:
+```
+Waiting device
+Device found /dev/hidraw2
+Read buffer
+No tslib calibration file, using defaults.
+A1..A7:  1 0 0 0 1 0 1
+Screen dims: X= 0  Y= 0
+```
+
+When you touch lcd then there should show some new lines:
+```
+True 2275 2697
+Left click
+True 2283 2673
+True 2293 2682
+True 2308 2704
+True 2308 2776
+False 0 0
+Release
+```
+
+Open 2nd SSH terminal, and check which new event input device is created:
+```
+pi@raspiv2 ~ $ ls /dev/input/
+by-id  by-path  event0  event1  event2  js0  mice  mouse0  mouse1
+```
+
+I have new input devices: ```/dev/input/event2``` and ```/dev/input/mouse1``` . I'm interrested in ```event2``` because this is input device created by python driver that runs in 1st ssh terminal.
+
+Now I can run calibration program from tslib using as device ```event2``` so I type (replace 2 by your new input event device number):
+```
+pi@raspiv2 ~ $ sudo TSLIB_CONFFILE=/etc/ts.conf TSLIB_CALIBFILE=/etc/pointercal TSLIB_FBDEVICE=/dev/fb0 TSLIB_TSDEVICE=/dev/input/event2 ts_calibrate
+```
+
+Now shoud show up a black screen with croshair in around left upper corner of screen where in middle there is a text "TSLIB calibration utility".
+
+[calib-screen.png]
+
+Using stylus touch as said 5 points...
+
+Now you should get something like this in console (your values might differ):
+```
+pi@raspiv2 ~ $ sudo TSLIB_CONFFILE=/etc/ts.conf TSLIB_CALIBFILE=/etc/pointercal TSLIB_FBDEVICE=/dev/fb0 TSLIB_TSDEVICE=/dev/input/event2 ts_calibrate
+xres = 800, yres = 480
+Took 6 samples...
+Top left : X =  378 Y =  586
+Took 13 samples...
+Top right : X = 3728 Y =  621
+Took 11 samples...
+Bot right : X = 3728 Y = 3565
+Took 10 samples...
+Bot left : X =  371 Y = 3561
+Took 12 samples...
+Center : X = 2038 Y = 2087
+-28.129211 0.208733 0.000249
+-26.048889 -0.000745 0.128396
+Calibration constants: -1843476 13679 16 -1707140 -48 8414 65536
+```
+
+Now check if /etc/pointercal file exists and have values from last line "Calibration constans":
+```
+pi@raspiv2 ~ $ cat /etc/pointercal
+13679 16 -1843476 -48 8414 -1707140 65536 800 480pi@raspiv2 ~ $
+```
+
+Last 2 values 800 and 480 are screen size. Now, go back to your first terminal and hit few times in succession ```Ctrl+C``` to stop driver script.
+
+Now run again driver script and check if calibration constans are loaded:
 ```
 
 
 
 
-
+ sudo TSLIB_CONFFILE=/etc/ts.conf TSLIB_CALIBFILE=/etc/pointercal TSLIB_FBDEVICE=/dev/fb0 TSLIB_TSDEVICE=/dev/input/event2 ts_calibrate
 
 
 

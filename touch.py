@@ -8,6 +8,9 @@ import uinput
 import pyudev
 import os
 
+# calibration file location
+calib_file = "/etc/pointercal"
+
 # convert touch panel raw location point into real point using formula from tslib -> linear.c file
 def display_touch_point(c, pt):
     #samp->x = pt[0] ; samp->y = pt[1];
