@@ -185,6 +185,8 @@ pi@raspiv2 ~ $ cd tslib
 pi@raspiv2 ~/tslib $ git clone 
 pi@raspiv2 ~/tslib $ git clone https://github.com/saper-2/rpi-5inch-hdmi-touchscreen-driver.git
 pi@raspiv2 ~/tslib $ cd rpi-5inch-hdmi-touchscreen-driver
+pi@raspiv2 ~/tslib/rpi-5inch-hdmi-touchscreen-driver $ chmod +x install-prepare.sh
+
 ```
 
 

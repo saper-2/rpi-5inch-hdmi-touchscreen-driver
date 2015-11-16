@@ -10,40 +10,40 @@ import os
 
 # convert touch panel raw location point into real point using formula from tslib -> linear.c file
 def display_touch_point(c, pt):
-	#samp->x = pt[0] ; samp->y = pt[1];
-	#xtemp = samp->x; ytemp = samp->y;
-	dx = ( c[2] + c[0]*pt[0] + c[1]*pt[1] ) / c[6]; # samp->x =	( lin->a[2] + lin->a[0]*xtemp + lin->a[1]*ytemp ) / lin->a[6];
-	dy = ( c[5] + c[3]*pt[0] + c[4]*pt[1] ) / c[6]; # samp->y =	( lin->a[5] + lin->a[3]*xtemp + lin->a[4]*ytemp ) / lin->a[6];
-	#if (info->dev->res_x && lin->cal_res_x) samp->x = samp->x * info->dev->res_x / lin->cal_res_x;
-	#if (info->dev->res_y && lin->cal_res_y) samp->y = samp->y * info->dev->res_y / lin->cal_res_y;
-	
-	return [int(dx),int(dy)]
+    #samp->x = pt[0] ; samp->y = pt[1];
+    #xtemp = samp->x; ytemp = samp->y;
+    dx = ( c[2] + c[0]*pt[0] + c[1]*pt[1] ) / c[6]; # samp->x =    ( lin->a[2] + lin->a[0]*xtemp + lin->a[1]*ytemp ) / lin->a[6];
+    dy = ( c[5] + c[3]*pt[0] + c[4]*pt[1] ) / c[6]; # samp->y =    ( lin->a[5] + lin->a[3]*xtemp + lin->a[4]*ytemp ) / lin->a[6];
+    #if (info->dev->res_x && lin->cal_res_x) samp->x = samp->x * info->dev->res_x / lin->cal_res_x;
+    #if (info->dev->res_y && lin->cal_res_y) samp->y = samp->y * info->dev->res_y / lin->cal_res_y;
+    
+    return [int(dx),int(dy)]
 
 # read calibration data from pointercal created by ts_calibrate (from tslib)
 def read_pointercal_calib_file():
-	# a1..a7 are touch panel calibration coefficients
-	a1=1 #0
-	a2=0 #1
-	a3=0 #2
-	a4=0 #3
-	a5=1 #4
-	a6=0 #5
-	a7=1 #6
-	# scx, scy are screen dimensions at moment of performing calibration
-	scx=0
-	scy=0
-	# file is built from single line, values are space separated, there is 9 values
-	try:
-		with open(calib_file,'r') as ff:
-			a1,a2,a3,a4,a5,a6,a7,scx,scy = ff.readline().split()
-	except:
-		print("No tslib calibration file, using defaults.")
-	
-	print("A1..A7: ",a1,a2,a3,a4,a5,a6,a7)
-	print("Screen dims: X=",scx," Y=", scy)
-	return [int(a1),int(a2),int(a3),int(a4),int(a5),int(a6),int(a7)]
-	
-	
+    # a1..a7 are touch panel calibration coefficients
+    a1=1 #0
+    a2=0 #1
+    a3=0 #2
+    a4=0 #3
+    a5=1 #4
+    a6=0 #5
+    a7=1 #6
+    # scx, scy are screen dimensions at moment of performing calibration
+    scx=0
+    scy=0
+    # file is built from single line, values are space separated, there is 9 values
+    try:
+        with open(calib_file,'r') as ff:
+            a1,a2,a3,a4,a5,a6,a7,scx,scy = ff.readline().split()
+    except:
+        print("No tslib calibration file, using defaults.")
+    
+    print("A1..A7: ",a1,a2,a3,a4,a5,a6,a7)
+    print("Screen dims: X=",scx," Y=", scy)
+    return [int(a1),int(a2),int(a3),int(a4),int(a5),int(a6),int(a7)]
+    
+    
 
 # Wait and find devices
 def read_and_emulate_mouse(deviceFound):
@@ -56,8 +56,8 @@ def read_and_emulate_mouse(deviceFound):
             uinput.ABS_X,
             uinput.ABS_Y,
         ])
-		
-		cal_data = read_pointercal_calib_file()
+        
+        cal_data = read_pointercal_calib_file()
 
         clicked = False
         rightClicked = False
@@ -76,9 +76,9 @@ def read_and_emulate_mouse(deviceFound):
             time.sleep(0.01)
 
             if btnLeft:
-				# calc real touch point
-				dp = display_touch_point(cal_data, [x,y])
-				# dp[0] - LCD X , dp[1] - LCD Y
+                # calc real touch point
+                dp = display_touch_point(cal_data, [x,y])
+                # dp[0] - LCD X , dp[1] - LCD Y
                 device.emit(uinput.ABS_X, dp[0], True)
                 device.emit(uinput.ABS_Y, dp[1], True)
 
