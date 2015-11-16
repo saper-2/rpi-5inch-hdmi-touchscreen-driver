@@ -38,7 +38,7 @@ def read_pointercal_calib_file():
             a1,a2,a3,a4,a5,a6,a7,scx,scy = ff.readline().split()
     except:
         print("No tslib calibration file, using defaults.")
-    
+
     print("A1..A7: ",a1,a2,a3,a4,a5,a6,a7)
     print("Screen dims: X=",scx," Y=", scy)
     return [int(a1),int(a2),int(a3),int(a4),int(a5),int(a6),int(a7)]
@@ -56,9 +56,8 @@ def read_and_emulate_mouse(deviceFound):
             uinput.ABS_X,
             uinput.ABS_Y,
         ])
-
         cal_data = read_pointercal_calib_file()
-
+        
         clicked = False
         rightClicked = False
         (lastX, lastY) = (0, 0)
