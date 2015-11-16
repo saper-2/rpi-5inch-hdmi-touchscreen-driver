@@ -56,7 +56,7 @@ Bus 001 Device 002: ID 0424:9514 Standard Microsystems Corp.
 Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
 ```
 
-If you can't identify you touch panel unplug your everything other form usb and anything other than ```1d6b:0002```, ```0424:9514``` and ```0424:ec00 ``` must be your touch panel controller.
+If you can't identify you touch panel unplug everything else form usb and anything other than (VID:PID) ```1d6b:0002```, ```0424:9514``` and ```0424:ec00 ``` must be your touch panel controller.
 
 
 # 2. Identify format
@@ -72,7 +72,7 @@ crw-rw-rw-  1 root root    247,   2 Nov 16 00:12 hidraw2
 ```
 I have 3 usb-hid compiliant devices, one is a touch panel, two are for wireless mouse & keyboard . Which one is which, just test it :smile: (replace X with numbers that you have :) )
 
-So go for first, type ```sudo xxd -c 25 /dev/hidrawX``` and touch the panel screen with your finger if some line appear then this device is your touch panel, in my case this is a device ```hidraw0``` (Use Ctrl+C to exit) :
+So go for first, type ```sudo xxd -c 25 /dev/hidraw0``` and touch the panel screen with your finger if some line appear then this device is your touch panel, in my case this is a device ```hidraw0``` (Use Ctrl+C to exit) :
 
 ```
 pi@raspiv2 ~ $ sudo xxd -c 25 /dev/hidraw0
@@ -86,8 +86,8 @@ pi@raspiv2 ~ $ sudo xxd -c 25 /dev/hidraw0
 00000af: 00aa 0107 ef0b 22bb 0000 0000 0000 0000 0000 0000 0000 00aa 00  ......"..................
 ```
 
-So how to tell if I have 25 or 22 bytes, each touch frame starts from 0xAA, followed by byte that tell if this is a touch or release, after this are 2 coordinates (x and Y) of touch in 16bit value (2 byte per each coordinate: 2 bytes for X and 2 bytes for Y - 4 bytes total). After that there is 0xBB and goes 0x00's (in multitouch touch panels (capacitive touch panels) in those bytes are coords up to 5 additional touch points).
-As you can see, in first line there is already a start of next frame (0xAA) at 23rd byte so I change parameter ```-c``` to 22:
+So how to tell if I have 25 or 22 bytes, each report frame of touch start from 0xAA, followed by byte that tell if this is a touch or release, after this are 2 coordinates (x and Y) of touch in 16bit value (2 byte per each coordinate: 2 bytes for X and 2 bytes for Y - 4 bytes total). After that there is 0xBB and goes few 0x00's (in multitouch panels (capacitive ones) in those bytes are placed up to 5 additional touch points).
+As you can see, in first line there is already a start of next frame (0xAA) at 23rd byte so I change parameter ```-c``` to 22 ( 25-(23-1) = 3 too much, 25-3=22):
 ```
 pi@raspiv2 ~ $ sudo xxd -c 22 /dev/hidraw0
 0000000: aa01 0a93 07dc bb00 0000 0000 0000 0000 0000 0000 0000  ......................
@@ -97,10 +97,10 @@ pi@raspiv2 ~ $ sudo xxd -c 22 /dev/hidraw0
 0000058: aa01 0a7c 07bb bb00 0000 0000 0000 0000 0000 0000 0000  ...|..................
 000006e: aa00 0000 0000 bb00 0000 0000 0000 0000 0000 0000 0000  ......................
 ```
-Now I have a nicely aligned each frame start at first byte (first column), and each frame fit exactly one line. So I have touch panel that raport a touch with 22 bytes...
+Now I have a nicely aligned each frame start at first byte (first column), and each frame fit exactly one line. So I have touch panel that report a touch with 22 bytes...
 
 # 3. Install tslib
-*Don't install tslib from raspberry pi repositories* this version is older than dinosaurs. You have to build one yourself. 
+_Don't install tslib from raspberry pi repositories_ this version is older than dinosaurs. You have to build one yourself. 
 Without rambling:
 ```
 pi@raspiv2 ~ $ mkdir tslib
@@ -119,7 +119,7 @@ pi@raspiv2 ~/tslib/tslib $ sudo make install
 
 Libraries are installed at: ```/usr/local/lib/libts-1.0.so.0.0.0```, tslib drivers are installed at ```/usr/local/lib/ts```
 
-Now add to system path tslib modules, create new file by (I use vi, you can use nano):
+Now add to system path tslib modules, create new file by (I use ```vi```, you can use ```nano```):
 ```
 pi@raspiv2 ~/tslib/tslib $ sudo vi /etc/ld.so.conf.d/tslib.conf
 ```
@@ -134,7 +134,7 @@ Save, exit editor, and run to update LD path:
 pi@raspiv2 ~/tslib/tslib $ sudo ldconfig
 ```
 
-Now copy from tslib/etc to etc config file:
+Now copy from ```tslib/etc`` to ```/etc``` config file:
 ```
 pi@raspiv2 ~/tslib/tslib $ sudo cp etc/ts.conf /etc/ts.conf
 ```
@@ -169,7 +169,7 @@ module dejitter delta=100
 module linear
 ```
 
-Now test tslib by running ts_test, specify in command line tslib constans (TSLIB_CONFIGFILE - configruation file path, and TSLIB_FBDEVICE - frame buffer device, default for HDMI enabled this is /dev/fb0):
+Now test tslib by running ts_test, specify in command line tslib constans (TSLIB_CONFIGFILE - configruation file path, and TSLIB_FBDEVICE - frame buffer device, default for HDMI this is ```/dev/fb0```):
 ```
 pi@raspiv2 ~ $ sudo TSLIB_CONFFILE=/etc/ts.conf TSLIB_FBDEVICE=/dev/fb0 ts_test
 ```
@@ -183,7 +183,8 @@ tslib now works, now we need user-space touch driver to install.
 ```
 pi@raspiv2 ~ $ cd tslib
 pi@raspiv2 ~/tslib $ git clone 
-
+pi@raspiv2 ~/tslib $ git clone https://github.com/saper-2/rpi-5inch-hdmi-touchscreen-driver.git
+pi@raspiv2 ~/tslib $ cd rpi-5inch-hdmi-touchscreen-driver
 ```
 
 
