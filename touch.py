@@ -56,7 +56,7 @@ def read_and_emulate_mouse(deviceFound):
             uinput.ABS_X,
             uinput.ABS_Y,
         ])
-        
+
         cal_data = read_pointercal_calib_file()
 
         clicked = False
