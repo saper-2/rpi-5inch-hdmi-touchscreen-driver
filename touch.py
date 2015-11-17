@@ -46,7 +46,7 @@ def read_pointercal_calib_file():
 
     print("A1..A7: ",a1,a2,a3,a4,a5,a6,a7)
     print("Screen dims: X=",scx," Y=", scy)
-	syslog.syslog(syslog.LOG_INFO,'TouchDriver: Using calibration data A1..A7: {0} {1} {2} {3} {4} {5} {6}'.format(a1,a2,a3,a4,a5,a6,a7))
+    syslog.syslog(syslog.LOG_INFO,'TouchDriver: Using calibration data A1..A7: {0} {1} {2} {3} {4} {5} {6}'.format(a1,a2,a3,a4,a5,a6,a7))
     return [int(a1),int(a2),int(a3),int(a4),int(a5),int(a6),int(a7)]
     
     
