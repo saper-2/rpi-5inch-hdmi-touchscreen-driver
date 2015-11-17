@@ -1,9 +1,9 @@
 RPi HDMI 5-inch LCD with resistive touchpanel
 ===================================
-I have ordered a (let me quote title :D) "5 inch LCD HDMI Touch Screen Display TFT LCD Panel Module Shield 800*480 for Banana Pi and Raspberry Pi 2 model B/B+" from chinese seller from aliexpress.
+I have ordered a (let me quote title :smiley:) "5 inch LCD HDMI Touch Screen Display TFT LCD Panel Module Shield 800*480 for Banana Pi and Raspberry Pi 2 model B/B+" from Chinese seller (from aliexpress).
 I didn't event bothered to ask for source code for driver, because I'm quiet sure, I wouldn't get anything from the seller anyway (by my expirence to get from seller for 3.5inch spi lcd tft driver sources)...
-So I started to digg google, and I cam across a repo https://github.com/derekhe/waveshare-7inch-touchscreen-driver , where this controller is descripped rather well. But there is no calibration so I ended with working touch panel only in small upper ledft rectangle where raw touch coordinates overlapp with inside screen bounds (0,0 to 800,480).
-In searching for calibration, I found tslib https://github.com/kergoth/tslib which have everything that is needed to calibrate touch panel. First I installed tslib from rpi repos but, this lib is soooooo old that it remembers dinosuars :smile: . I had to build one from source. After that I struggled how to make this 5inch touch panel works under xserver, but I got this panel working after doing some changes inside touch.py and using calibration data from tslib :smile:
+So I started to dig google, and I cam across a repo https://github.com/derekhe/waveshare-7inch-touchscreen-driver , where this controller is descripped rather well. But there is no calibration so I ended with working touch panel only in small upper left rectangle where raw touch coordinates overlap with inside screen bounds (0,0 to 800,480).
+In searching for calibration, I found tslib https://github.com/kergoth/tslib which have everything that is needed to calibrate touch panel. First I installed tslib from rpi repos but, this lib is soooooo old that it remembers dinosaurs :smile: . I had to build one from source. After that I struggled how to make this 5inch touch panel works under xserver... After 2 days, I got this panel working... And that's how I did :smiley: :
 
 My wiring is:
 ```
@@ -12,7 +12,8 @@ My wiring is:
 ```
 
 # 0. Setup RPi to work with this LCD (800x480)
-Edit ```/boot/config.txt``` , and find line ```hdmi_force_hotplug=1```, if you have it commented then uncomment it. Now uncomment (enable) and set:
+===================================
+Edit ```/boot/config.txt``` , and find line ```hdmi_force_hotplug=1```, if line is commented then uncomment it. Now uncomment (enable) and set:
 * ```hdmi_group=2``` 
 * ```hdmi_mode=87```
 
@@ -20,12 +21,18 @@ Add under hdmi_mode line:
 ```
 hdmi_cvt 800 480 60 6 0 0 0
 ```
-There you have explained this line: https://www.raspberrypi.org/forums/viewtopic.php?f=29&t=24679 , basically config HDMI to: resolution 800x480px, refresh 60Hz, aspect ratio 15:9, no margins, no interlace, normal blanking.
+There is this option explained: https://www.raspberrypi.org/forums/viewtopic.php?f=29&t=24679 , basically config HDMI to: 
+- resolution 800x480px, 
+- refresh 60Hz, 
+- aspect ratio 15:9, 
+- no margins, 
+- no interlace, 
+- normal blanking.
 
 Now save, connect lcd if still not connected :smile: and reboot Pi
 
 # 1. Identify touch controller usb info
-This touchcontroller using a GD32F103C8T6 (this is a pin-to-pin (and I think function-to-functiuon too) clone of STM32F103C8T6, even font used for chip marking is identical :lol: ) and XPT2046. Manufacturer (whoever is) probably took just the USB VID number from D-WAV Scientific Co., Ltd...
+This touch controller uses a GD32F103C8T6 (this is a pin-to-pin (and I think function-to-function too) clone of STM32F103C8T6, even font used for chip marking is identical :laughing: ) and XPT2046. Manufacturer (whoever is) probably took just the USB VID number from D-WAV Scientific Co., Ltd (or just typed some random number and hit a D-WAV VID) ...
 
 First look at dmesg:
 ```
@@ -40,7 +47,8 @@ pi@raspiv2 ~ $ dmesg|grep 'usb\|hid'
 [    2.175660] hid-generic 0003:0EEF:0005.0001: hiddev0,hidraw0: USB HID v1.10 Device [RPI_TOUCH By ZH851] on usb-3f980000 usb-1.3/input0
 ...
 ```
-So we have manufacturer: ```RPI_TOUCH``` and product named: ```By ZH851``` , this is a little different manufacturer than registered at usb.org - and this touch panel doesn't have anything to them... But we are more interested in line ```[    2.159236] usb 1-1.3: New USB device found, idVendor=0eef, idProduct=0005``` which contains usb VID (idVendor) and PID (idProduct). I have touch panel that identify itself as VID & PID:
+So there is manufacturer: ```RPI_TOUCH``` and product named: ```By ZH851``` , this is a little different manufacturer than registered at usb.org :smirk: - and this touch panel doesn't have anything to them also... But, the most interesting is in line ```[    2.159236] usb 1-1.3: New USB device found, idVendor=0eef, idProduct=0005``` which contains usb VID (idVendor) and PID (idProduct). 
+I have touch panel that identify itself as VID & PID:
 ```
 VID=0x0eef
 PID=0x0005
@@ -56,13 +64,14 @@ Bus 001 Device 002: ID 0424:9514 Standard Microsystems Corp.
 Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
 ```
 
-If you can't identify you touch panel unplug everything else form usb and anything other than (VID:PID) ```1d6b:0002```, ```0424:9514``` and ```0424:ec00 ``` must be your touch panel controller.
-
-
 # 2. Identify format
-I assume that you have a touch controller that identify itself with ```VID=0x0eef``` , I know about 2 versions, one uses a 25 byte long touch data , while the other (my case) use a 22 byte long touch data . I will show how to identify them now:
+I have a touch controller that identify itself with ```VID=0x0eef``` . There are 2 versions: 
+* one uses a 25 byte long touch data , 
+* the other (in my case) use a 22 byte long touch data . 
 
-First, look at the last line in dmesg, there is a line just under serial number with a this touch panel usb vid:pid ```0EEF:0005``` followed by dot and endpoint number (not need to know, but if you insist then google it), after that is duble dot and names of devices registered in ```/dev/``` in my case this is ```hidraw0``` . Check if you have in ```/dev/``` hidrawX (X - any number from 0 to x :smile: ):
+To identify them:
+
+First, look at the last line in dmesg, there is a line just under serial number with a this touch panel usb vid:pid ```0EEF:0005``` followed by dot and endpoint number, after that is duble dot and names of devices registered in ```/dev/``` in my case this is ```hidraw0``` . Now I check what I have in ```/dev``` from hidraw devices:
 
 ```
 pi@raspiv2 ~ $ ls -la /dev|grep hid
@@ -70,9 +79,9 @@ crw-rw-rw-  1 root root    247,   0 Nov 16 00:12 hidraw0
 crw-rw-rw-  1 root root    247,   1 Nov 16 00:12 hidraw1
 crw-rw-rw-  1 root root    247,   2 Nov 16 00:12 hidraw2
 ```
-I have 3 usb-hid compiliant devices, one is a touch panel, two are for wireless mouse & keyboard . Which one is which, just test it :smile: (replace X with numbers that you have :) )
+I have 3 usb-hid compliant devices, one is a touch panel, two are for wireless mouse & keyboard . Which one is which, I'll just test each one of them :smile: ...
 
-So go for first, type ```sudo xxd -c 25 /dev/hidraw0``` and touch the panel screen with your finger if some line appear then this device is your touch panel, in my case this is a device ```hidraw0``` (Use Ctrl+C to exit) :
+Go for first, type ```sudo xxd -c 25 /dev/hidraw0``` and I touch the panel screen with finger. If on terminal shows up some lines, then this device is my touch panel. I found my touch panel at first try :smiley: ```hidraw0``` (hit ```Ctrl+C``` to exit) :
 
 ```
 pi@raspiv2 ~ $ sudo xxd -c 25 /dev/hidraw0
@@ -86,8 +95,9 @@ pi@raspiv2 ~ $ sudo xxd -c 25 /dev/hidraw0
 00000af: 00aa 0107 ef0b 22bb 0000 0000 0000 0000 0000 0000 0000 00aa 00  ......"..................
 ```
 
-So how to tell if I have 25 or 22 bytes, each report frame of touch start from 0xAA, followed by byte that tell if this is a touch or release, after this are 2 coordinates (x and Y) of touch in 16bit value (2 byte per each coordinate: 2 bytes for X and 2 bytes for Y - 4 bytes total). After that there is 0xBB and goes few 0x00's (in multitouch panels (capacitive ones) in those bytes are placed up to 5 additional touch points).
-As you can see, in first line there is already a start of next frame (0xAA) at 23rd byte so I change parameter ```-c``` to 22 ( 25-(23-1) = 3 too much, 25-3=22):
+How to tell, if I have 25 or 22 bytes version? 
+Each report frame of touch start from 0xAA, followed by byte that tell if this is a touch or release. After this are 2 coordinates (x and Y) of touch in 16bit value (2 byte per each coordinate: 2 bytes for X and 2 bytes for Y - 4 bytes total). After that, is 0xBB and goes few 0x00's (in multi-touch panels (capacitive) in those bytes are placed up to 5 additional touch points).
+In first line there is already a start of next frame (0xAA) at 23rd byte, so I change parameter ```-c``` to 22 ( 25-(23-1) = 3 too much, 25-3=22):
 ```
 pi@raspiv2 ~ $ sudo xxd -c 22 /dev/hidraw0
 0000000: aa01 0a93 07dc bb00 0000 0000 0000 0000 0000 0000 0000  ......................
@@ -100,8 +110,9 @@ pi@raspiv2 ~ $ sudo xxd -c 22 /dev/hidraw0
 Now I have a nicely aligned each frame start at first byte (first column), and each frame fit exactly one line. So I have touch panel that report a touch with 22 bytes...
 
 # 3. Install tslib
-_Don't install tslib from raspberry pi repositories_ this version is older than dinosaurs. You have to build one yourself. 
-Without rambling:
+
+<b>Don't install tslib from raspberry pi repositories</b> this version is older than dinosaurs. I have to build more recent version from sources, so without grumbling:
+
 ```
 pi@raspiv2 ~ $ mkdir tslib
 pi@raspiv2 ~/tslib $ cd tslib
@@ -117,9 +128,9 @@ pi@raspiv2 ~/tslib/tslib $ make
 pi@raspiv2 ~/tslib/tslib $ sudo make install
 ```
 
-Libraries are installed at: ```/usr/local/lib/libts-1.0.so.0.0.0```, tslib drivers are installed at ```/usr/local/lib/ts```
+Libraries are installed at: ```/usr/local/lib/libts-1.0.so.0.0.0```, tslib plugin drivers are installed at ```/usr/local/lib/ts```
 
-Now add to system path tslib modules, create new file by (I use ```vi```, you can use ```nano```):
+Now add to system path tslib plugin modules, create new file by (I use ```vi```):
 ```
 pi@raspiv2 ~/tslib/tslib $ sudo vi /etc/ld.so.conf.d/tslib.conf
 ```
@@ -173,10 +184,10 @@ Now test tslib by running ts_test, specify in command line tslib constans (TSLIB
 ```
 pi@raspiv2 ~ $ sudo TSLIB_CONFFILE=/etc/ts.conf TSLIB_FBDEVICE=/dev/fb0 ts_test
 ```
-Now should appear black screen with croshair in middle and 3 buttons: *Drag* , *Draw* , *Quit*
+Now, appear black screen with croshair in middle and 3 buttons: <b>Drag</b> , <b>Draw</b> , <b>Quit</b>
 Hit ```Ctrl+C``` to terminate.
 
-tslib now works, now we need user-space touch driver to install.
+tslib now works, now I need user-space touch driver to install.
 
 # 4. Install python user-space driver
 
@@ -189,19 +200,15 @@ pi@raspiv2 ~/tslib/rpi-5inch-hdmi-touchscreen-driver $ chmod +x install-prepare.
 pi@raspiv2 ~/tslib/rpi-5inch-hdmi-touchscreen-driver $ ./install-prepare.sh
 ```
 
-Type this to get input devices in system before running touch panel user-space driver. Depending what you have connected (keyboards and mice) you can get other input devices, I have:
+Now, I check what I have input devices before running the user-space driver. I have:
 ```
 pi@raspiv2 ~/tslib/rpi-5inch-hdmi-touchscreen-driver $ ls /dev/input/
 by-id  by-path  event0  event1  mice  mouse0
 ```
 
-Now test if python program find touch panel and will work ok:
+Now, start a driver main script and see if touch panel is found:
 ```
 pi@raspiv2 ~/tslib/rpi-5inch-hdmi-touchscreen-driver $ sudo ./touch.py
-```
-
-You shoud see:
-```
 Waiting device
 Device found /dev/hidraw2
 Read buffer
@@ -210,7 +217,7 @@ A1..A7:  1 0 0 0 1 0 1
 Screen dims: X= 0  Y= 0
 ```
 
-When you touch lcd then there should show some new lines:
+When I touch screen, in terminal shows up new lines:
 ```
 True 2275 2697
 Left click
@@ -222,26 +229,24 @@ False 0 0
 Release
 ```
 
-Open 2nd SSH terminal, and check which new event input device is created:
+Start 2nd terminal, and check what new a event type input device was created, while the driver is running in first terminal:
 ```
 pi@raspiv2 ~ $ ls /dev/input/
 by-id  by-path  event0  event1  event2  js0  mice  mouse0  mouse1
 ```
 
-I have new input devices: ```/dev/input/event2``` and ```/dev/input/mouse1``` . I'm interrested in ```event2``` because this is input device created by python driver that runs in 1st ssh terminal.
+The new ones are: ```/dev/input/event2``` and ```/dev/input/mouse1``` . Particually, I'm most interrested in ```event2``` .
 
-Now I can run calibration program from tslib using as device ```event2``` so I type (replace 2 by your new input event device number):
+Now I can run calibration program from tslib using as device ```event2``` :
 ```
 pi@raspiv2 ~ $ sudo TSLIB_CONFFILE=/etc/ts.conf TSLIB_CALIBFILE=/etc/pointercal TSLIB_FBDEVICE=/dev/fb0 TSLIB_TSDEVICE=/dev/input/event2 ts_calibrate
 ```
 
-Now shoud show up a black screen with croshair in around left upper corner of screen where in middle there is a text "TSLIB calibration utility".
+Now show up a calibration program, touch 5 times at requested points with stylus.
 
 [calib-screen.png]
 
-Using stylus touch as said 5 points...
-
-Now you should get something like this in console (your values might differ):
+Program closes itself after getting 5 points. I have in console now:
 ```
 pi@raspiv2 ~ $ sudo TSLIB_CONFFILE=/etc/ts.conf TSLIB_CALIBFILE=/etc/pointercal TSLIB_FBDEVICE=/dev/fb0 TSLIB_TSDEVICE=/dev/input/event2 ts_calibrate
 xres = 800, yres = 480
@@ -260,114 +265,64 @@ Center : X = 2038 Y = 2087
 Calibration constants: -1843476 13679 16 -1707140 -48 8414 65536
 ```
 
-Now check if /etc/pointercal file exists and have values from last line "Calibration constans":
+Check if ```/etc/pointercal``` file have calibration constans:
 ```
 pi@raspiv2 ~ $ cat /etc/pointercal
 13679 16 -1843476 -48 8414 -1707140 65536 800 480pi@raspiv2 ~ $
 ```
 
-Last 2 values 800 and 480 are screen size. Now, go back to your first terminal and hit few times in succession ```Ctrl+C``` to stop driver script.
+<u>Info:</u> Last 2 values 800 and 480 are screen size.
+
+In first terminal hit few times in succession ```Ctrl+C``` to stop driver script.
 
 Now run again driver script and check if calibration constans are loaded:
 ```
-
-
-
-
- sudo TSLIB_CONFFILE=/etc/ts.conf TSLIB_CALIBFILE=/etc/pointercal TSLIB_FBDEVICE=/dev/fb0 TSLIB_TSDEVICE=/dev/input/event2 ts_calibrate
-
-
-
-
-
-
-
-
-
-
-
-
-Now 
-
-# Install (Thanks Kaz Fukuoka to fix this guide)
-ssh into your raspiberry
-
-```
-git clone https://github.com/derekhe/waveshare-7inch-touchscreen-driver
-cd wavesahre-7inch-touchscreen-driver
-chmod +x install.sh
-sudo apt-get update
-sudo ./install.sh
-sudo restart
+pi@raspiv2 ~/tslib/rpi-5inch-hdmi-touchscreen-driver $ sudo ./touch.py
+Waiting device
+Device found /dev/hidraw2
+Read buffer
+A1..A7:  13679 16 -1843476 -48 8414 -1707140 65536
+Screen dims: X= 800  Y= 480
 ```
 
-# How do I hack it
-By looking at the dmesg information, we can see it is installed as a hid-generic driver, the vendor is 0x0eef(eGalaxy) and product is 0x0005.
-0x0005 can't be found anywhere, I think the company wrote their own driver to support this.
+Looks like the calibration values loaded by driver from file are identical to those from ts_calibrate - this is great.
 
-## dmesg infomation
+I have already started Xserver with displayed desktop, so when I touch there cursor goes, and as I move my finger on screen the cursor follows :smiley:
+
+# 5. Test calibration program
+To test calibration I created a small python program: touch-test.py . Just run it with sudo and you can test how precisie is calibration. This of course depends how precise you can touch the displayed point :smile:
+
 ```
-[    3.518144] usb 1-1.5: new full-speed USB device number 4 using dwc_otg
-[    3.606036] udevd[174]: starting version 175
-[    3.631476] usb 1-1.5: New USB device found, idVendor=0eef, idProduct=0005
-[    3.641195] usb 1-1.5: New USB device strings: Mfr=1, Product=2, SerialNumber=3
-[    3.653540] usb 1-1.5: Product: By ZH851
-[    3.659956] usb 1-1.5: Manufacturer: RPI_TOUCH
-[    3.659967] usb 1-1.5: SerialNumber: \xffffffc2\xffffff84\xffffff84\xffffffc2\xffffffa0\xffffffa0B54711U335
-[    3.678577] hid-generic 0003:0EEF:0005.0001: hiddev0,hidraw0: USB HID v1.10 Device [RPI_TOUCH By ZH851] on usb-bcm2708_usb-1.5/input0
-```
-kernel config provide us more clue:
-```
-CONFIG_USB_EGALAX_YZH=y
+pi@raspiv2 ~/tslib/rpi-5inch-hdmi-touchscreen-driver $ sudo ./touch-test.py
 ```
 
-It is really a eGalaxy based device. Google this config but found nothing. I don't have a eGalxy to compare, maybe waveshare's touchscreen is only modifed the product id.
+# 6. Install user-space touch driver
 
-Then I look at the response of hidraw driver:
+This is easy, stop driver if still running in terminal (hit few times in succesion ```Ctrl+C``` ).
 
-## hidraw driver analysis
+Just run install.sh:
 ```
-pi@raspberrypi ~/python $ sudo xxd -c 25 /dev/hidraw0
-0000000: aa00 0000 0000 bb00 0000 0000 0000 0000 0000 0000 0000 0000 00  .........................
-0000019: aa01 00c5 0134 bb01 0000 0000 0000 0000 0000 0000 0000 0000 cc  .....4...................
-```
-
-You can try by your self, by moving the figure on the screen you will notice the value changes.
-Take one for example:
-```
-0000271: aa01 00e4 0139 bb01 01e0 0320 01e0 0320 01e0 0320 01e0 0320 cc  .....9..... ... ... ... .
+pi@raspiv2 ~/tslib/rpi-5inch-hdmi-touchscreen-driver $ sudo ./install.sh
+Set execution bit...
+Copy user-space driver and start as service script...
+Apply execution bit to driver file and service script...
+Set service to start driver at boot time....
+Done.
 ```
 
-"aa" is start of the command, "01" means clicked while "00" means unclicked. "00e4" and "0139" is the X,Y position (HEX).
-"bb" is start of multi-touch, and the following bytes are the position of each point.
+If there is no errors then driver is installed and should be already running :smiley:
 
-## Write the driver
-I use python to read from hidraw driver and then use uinput to emulate the mouse. It is quite easy to do. Please look at the source code.
+If not running then start it with ```sudo /etc/init.d/touch.sh start```
 
-## Other systems
-I think this driver can work in any linux system with hidraw and uinput driver support.
+========================================
+# About
 
-## Other displays
-I received an email from Adam, this driver may work with another type of screen:
+I have modiffied a https://github.com/derekhe/waveshare-7inch-touchscreen-driver to works with VID=0eef PID=0005 and 22 bytes report length touch panel. I have also added a calibration because author of oryginal driver requested $$$ for calibration. I have published this under MIT license so you can do with it anything, and I do not take any responsibilites if something goes wrong.
 
-> Hi there. Wanted to say thank you for writing and sharing the user space driver for 7" USB touchscreen, you have saved me!
 
-> Mine is branded Eleduino (see here for details: http://www.eleduino.com/5-Inch-HDMI-Input-Touch-Screen-for-Raspberry-PI-2-B-B-and-Banana-pro-pi-p10440.html) and I had exactly the same issue - closed source binary driver which simply replaced kernel modules.
+Tested on Raspbian: ```2015-09-24-raspbian-jessie.img``` with all updates to now (2015-11-16).
 
-> Your solution worked out of the box, and didn't even need calibration.
 
-> You're a hero!
-
-# Pro version features (in progress)
-Please try this driver and if you need to support more, please [contact me](derekhe@april1985.com) to get the paid pro version.
-
-1 More options:
-  -  Set right click duration
-
-2 Calibration:
-  - On screen calibration
-  - Scalable external screen calibration. So you can use touchscreen as a external touch panel
-
-3 Multitouch:
-  - Two fingures touch to simulate right click
-  - Three fingures to scrool
+# Credits
+* tslib author https://github.com/kergoth/tslib
+* author of https://github.com/derekhe/waveshare-7inch-touchscreen-driver for discovering how the controller talks

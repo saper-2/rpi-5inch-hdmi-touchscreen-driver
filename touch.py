@@ -7,6 +7,7 @@ import glob
 import uinput
 import pyudev
 import os
+import syslog
 
 # calibration file location
 calib_file = "/etc/pointercal"
@@ -40,10 +41,12 @@ def read_pointercal_calib_file():
         with open(calib_file,'r') as ff:
             a1,a2,a3,a4,a5,a6,a7,scx,scy = ff.readline().split()
     except:
+        syslog.syslog(syslog.LOG_WARNING,'TouchDriver: No calibration file: {0}'.format(calib_file))
         print("No tslib calibration file, using defaults.")
 
     print("A1..A7: ",a1,a2,a3,a4,a5,a6,a7)
     print("Screen dims: X=",scx," Y=", scy)
+	syslog.syslog(syslog.LOG_INFO,'TouchDriver: Using calibration data A1..A7: {0} {1} {2} {3} {4} {5} {6}'.format(a1,a2,a3,a4,a5,a6,a7))
     return [int(a1),int(a2),int(a3),int(a4),int(a5),int(a6),int(a7)]
     
     
@@ -73,6 +76,7 @@ def read_and_emulate_mouse(deviceFound):
                 print(btnLeft, x, y)
             except:
                 print('failed to read from deviceFound' + str(deviceFound))
+                syslog.syslog(syslog.LOG_WARNING,'TouchDriver: Failed to read from {0}'.format(deviceFound))
                 return
             
             time.sleep(0.01)
@@ -110,10 +114,11 @@ if __name__ == "__main__":
     os.system("modprobe uinput")
     os.system("chmod 666 /dev/hidraw*")
     os.system("chmod 666 /dev/uinput*")
-
+    syslog.syslog(syslog.LOG_INFO,'TouchDriver: Starting...')
+    
     while True:
         # try:
-        print("Waiting device")
+        print("Waiting for device")
         hidrawDevices = glob.glob("/dev/hidraw*")
 
         context = pyudev.Context()
@@ -126,6 +131,7 @@ if __name__ == "__main__":
 
         if deviceFound:
             print("Device found", deviceFound)
+            syslog.syslog(syslog.LOG_INFO,'TouchDriver: Found touchpanel at {0}'.format(deviceFound))
             read_and_emulate_mouse(deviceFound)
             # except:
             #     print("Error:", sys.exc_info())
