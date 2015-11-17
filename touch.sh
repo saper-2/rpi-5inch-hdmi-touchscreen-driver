@@ -6,8 +6,8 @@
 # Required-Stop:     $remote_fs $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Put a short description of the service here
-# Description:       Put a long description of the service here
+# Short-Description: Touch panel starting driver script
+# Description:       Start a user-space touch panel driver with system as service. From https://github.com/saper-2/rpi-5inch-hdmi-touchscreen-driver
 ### END INIT INFO
 
 # Change the next 3 lines to suit where you install your script and what you want to call it
