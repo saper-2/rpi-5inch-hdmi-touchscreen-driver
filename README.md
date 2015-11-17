@@ -1,9 +1,9 @@
 RPi HDMI 5-inch LCD with resistive touchpanel
 ===================================
 I have ordered a (let me quote title :smiley:) "5 inch LCD HDMI Touch Screen Display TFT LCD Panel Module Shield 800*480 for Banana Pi and Raspberry Pi 2 model B/B+" from Chinese seller (from aliexpress).
-I didn't event bothered to ask for source code for driver, because I'm quiet sure, I wouldn't get anything from the seller anyway (by my expirence to get from seller for 3.5inch spi lcd tft driver sources)...
-So I started to dig google, and I cam across a repo https://github.com/derekhe/waveshare-7inch-touchscreen-driver , where this controller is descripped rather well. But there is no calibration so I ended with working touch panel only in small upper left rectangle where raw touch coordinates overlap with inside screen bounds (0,0 to 800,480).
-In searching for calibration, I found tslib https://github.com/kergoth/tslib which have everything that is needed to calibrate touch panel. First I installed tslib from rpi repos but, this lib is soooooo old that it remembers dinosaurs :smile: . I had to build one from source. After that I struggled how to make this 5inch touch panel works under xserver... After 2 days, I got this panel working... And that's how I did :smiley: :
+I didn't even bothered to ask for source code for driver, because I'm quiet sure, I wouldn't get anything from the seller anyway (by my expirence to get from seller for 3.5inch spi lcd tft driver sources)...
+So I started to dig google, and I came across a https://github.com/derekhe/waveshare-7inch-touchscreen-driver , where this controller, or at least how the controller talk is explained. But there is no calibration so I ended with working touch panel only in small upper left rectangle where raw touch coordinates overlap with inside screen bounds (0,0 to 800,480).
+In searching for calibration, I found tslib https://github.com/kergoth/tslib which have everything that is needed to calibrate touch panel. First, I have installed tslib from rpi repos but, this lib is soooooo old that it remembers dinosaurs :smile: . I had to build one from source. After that I struggled how to make this 5inch touch panel works under xserver... After 2 days, I got this panel working... And below you can find how I did it :smiley: :
 
 My wiring is:
 ```
